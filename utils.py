@@ -28,11 +28,21 @@ def tl_ts_mod(transform_train,transform_valid,batch_size=128):
     return trainset,trainloader,testset,testloader
 
 def set_albumen_params(mean, std):
+    horizontalflip_prob= 0.2
+    rotate_limit= 15
+    shiftscalerotate_prob= 0.25
+    num_holes= 1
+    cutout_prob= 0.5
+    max_height = 16 #32/2
+    max_width = 16 #32/2
+
     transform_train = A.Compose(
-        [A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),
+        [
         A.RandomCrop(width=32, height=32),
-        A.HorizontalFlip(),
-        A.Cutout(num_holes=1, max_h_size=8, max_w_size=8),
+        #A.HorizontalFlip(p=horizontalflip_prob),
+        A.CoarseDropout(max_holes=num_holes,min_holes = 1, max_height=max_height, max_width=max_width, 
+        p=cutout_prob,fill_value=tuple([x * 255.0 for x in mean]),
+        min_height=max_height, min_width=max_width, mask_fill_value = None),
         A.Normalize(mean = mean, std = std, max_pixel_value=255, always_apply = True),
         ToTensorV2()
         ])
@@ -63,7 +73,7 @@ def load_data():
                                           shuffle=False, num_workers=2)
     return trainloader, trainset    
 
-def display_incorrect_pred(mismatch, n=10 ):
+def display_incorrect_pred(mismatch, n=20 ):
     classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     display_images = mismatch[:n]
     index = 0
@@ -72,7 +82,7 @@ def display_incorrect_pred(mismatch, n=10 ):
         image = img[0].squeeze().to('cpu').numpy()
         pred = classes[img[1]]
         actual = classes[img[2]]
-        ax = fig.add_subplot(2, 5, index+1)
+        ax = fig.add_subplot(4, 5, index+1)
         ax.axis('off')
         ax.set_title(f'\n Predicted Label : {pred} \n Actual Label : {actual}',fontsize=10) 
         ax.imshow(np.transpose(image, (1, 2, 0))) 
@@ -256,8 +266,15 @@ def generate_gradcam(misclassified_images, model, target_layers,device):
     gcam.remove_hook()
     return layers, probs, ids
 
-def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, misclassified_images, mean,std):
+def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, misclassified_images):
+
+    trl, trs = load_data()
     
+    show_sample(trs)
+
+    mean = list(np.round(trs.data.mean(axis=(0,1,2))/255, 4))
+    std = list(np.round(trs.data.std(axis=(0,1,2))/255,4))
+
     images=[]
     labels=[]
     for i, (img, pred, correct) in enumerate(misclassified_images):
