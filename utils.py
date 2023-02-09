@@ -91,8 +91,27 @@ def display_incorrect_pred(mismatch, n=20 ):
         index = index + 1
     plt.show()
 
+def show_sample(dataset):
+      
+    dataiter = iter(dataset)
+    images, labels = dataiter.next()
+    p = images.shape[0]
+
+    index = 0
+    fig = plt.figure(figsize=(20,10))
+    for img in images:
+        image = img[0].squeeze().to('cpu').numpy()
+        ax = fig.add_subplot(2, 5, index+1)
+        ax.axis('off')
+        ax.set_title(f'\n Label : {labels[0]}',fontsize=10) 
+        ax.imshow(np.transpose(image, (1, 2, 0))) 
+        index = index + 1
+    plt.show()
+
 def process_dataset(batch_size=128):
     trl, trs = load_data()
+    
+    show_sample(trs)
     
     mean = list(np.round(trs.data.mean(axis=(0,1,2))/255, 4))
     std = list(np.round(trs.data.std(axis=(0,1,2))/255,4))
