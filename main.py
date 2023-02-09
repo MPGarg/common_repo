@@ -7,6 +7,8 @@ import torchvision
 from torchsummary import summary
 import numpy as np
 from torch.optim.lr_scheduler import StepLR,OneCycleLR
+from torch.optim import Adam
+from torch.optim import SGD
 
 train_losses = []
 test_losses = []
@@ -96,11 +98,11 @@ def train_test_model(model, trainloader, testloader, norm_type='BN', EPOCHS=20, 
 
     #torch.manual_seed(42)
     if optim == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+        optimizer = SGD(model.parameters(), lr=lr, momentum=0.9)
     elif optim == 'ADAM':
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999))
+        optimizer = Adam(model.parameters(), lr=lr, betas=(0.9, 0.999))
     else:
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)      #fallback if nothing given
+        optimizer = SGD(model.parameters(), lr=lr, momentum=0.9)      #fallback if nothing given
 
     if sched == 'StepLR':
         scheduler = StepLR(optimizer, step_size=100, gamma=0.25)    
