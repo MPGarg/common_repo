@@ -320,4 +320,3 @@ def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, 
         
         plt.axis('off')
     plt.show()
-     
