@@ -92,21 +92,22 @@ def display_incorrect_pred(mismatch, n=20 ):
     plt.show()
 
 def show_sample(dataset):
-      
+    classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+        
     dataiter = iter(dataset)
-    images, labels = next(dataiter)
-    p = images.shape[0]
 
     index = 0
     fig = plt.figure(figsize=(20,10))
-    for img in images:
-        image = img[0].squeeze().to('cpu').numpy()
+    for i in range(10):
+        images, labels = next(dataiter)
+        actual = classes[labels]
+        image = images.squeeze().to('cpu').numpy()
         ax = fig.add_subplot(2, 5, index+1)
-        ax.axis('off')
-        ax.set_title(f'\n Label : {labels[0]}',fontsize=10) 
-        ax.imshow(np.transpose(image, (1, 2, 0))) 
         index = index + 1
-    plt.show()
+        ax.axis('off')
+        ax.set_title(f'\n Label : {actual}',fontsize=10) 
+        ax.imshow(np.transpose(image, (1, 2, 0))) 
+        images, labels = next(dataiter)
 
 def process_dataset(batch_size=128):
     trl, trs = load_data()
