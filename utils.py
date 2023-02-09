@@ -1,29 +1,13 @@
+from torchvision import datasets, transforms
 import torch
-import torch.nn as nn
+import torch.nn.functional as F
 import torchvision
-import torchvision.transforms as transforms
-import numpy as  np
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+import matplotlib.pyplot as plt
+import numpy as np
 
-def default_DL():
-  transform = transforms.Compose(
-    [transforms.ToTensor()])
-
-  trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
-  trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
-
-  testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform)
-  testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                         shuffle=False, num_workers=2)
-  return trainloader, trainset
-
-
-
-class C_10_DS(torchvision.datasets.CIFAR10):
+class cifar_ds10(torchvision.datasets.CIFAR10):
     def __init__(self, root="./data", train=True, download=True, transform=None):
         super().__init__(root=root, train=train, download=download, transform=transform)
 
@@ -36,50 +20,134 @@ class C_10_DS(torchvision.datasets.CIFAR10):
 
         return image, label
 
+def tl_ts_mod(transform_train,transform_valid,batch_size=128):
+    trainset = cifar_ds10(root='./data', train=True, download=True, transform=transform_train)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+    testset = cifar_ds10(root='./data', train=False, download=True, transform=transform_valid)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+    return trainset,trainloader,testset,testloader
 
-def set_compose_params(mean, std):
-  
+def set_albumen_params(mean, std):
+    horizontalflip_prob= 0.2
+    rotate_limit= 15
+    shiftscalerotate_prob= 0.25
+    num_holes= 1
+    cutout_prob= 0.5
+    max_height = 16 #32/2
+    max_width = 16 #32/2
 
-  transform_train = A.Compose(
-    [A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),
-     A.RandomCrop(width=32, height=32),
-     A.HorizontalFlip(),
-     A.Cutout(num_holes=1, max_h_size=8, max_w_size=8),
-     A.Normalize(mean = mean, std = std, max_pixel_value=255, always_apply = True),
-     ToTensorV2()
-    ])
-  
-  transform_valid = A.Compose(
-    [
-     A.Normalize(
-            mean=mean,
-            std=std,
-            max_pixel_value=255,
-        ),
-     ToTensorV2()
-    ])
-  return transform_train, transform_valid
+    transform_train = A.Compose(
+        [
+        #A.RandomCrop(height=16,width=16),
+        A.HorizontalFlip(p=horizontalflip_prob),
+        A.CoarseDropout(max_holes=num_holes,min_holes = 1, max_height=max_height, max_width=max_width, 
+        p=cutout_prob,fill_value=tuple([x * 255.0 for x in mean]),
+        min_height=max_height, min_width=max_width, mask_fill_value = None),
+        A.Normalize(mean = mean, std = std,p=1.0, always_apply = True),
+        ToTensorV2()
+        ])
+    
+    transform_valid = A.Compose(
+        [
+        A.Normalize(
+                mean=mean,
+                std=std,
+                p=1.0,
+                max_pixel_value=255,
+            ),
+        ToTensorV2()
+        ])
+    return transform_train, transform_valid 
 
+def load_data():
+    transform = transforms.Compose(
+      [transforms.ToTensor()])
 
-def tl_ts_mod(transform_train,transform_valid):
-  trainset = C_10_DS(root='./data', train=True, download=True, transform=transform_train)
-  trainloader = torch.utils.data.DataLoader(trainset, batch_size=512, shuffle=True, num_workers=2)
-  testset = C_10_DS(root='./data', train=False, download=True, transform=transform_valid)
-  testloader = torch.utils.data.DataLoader(testset, batch_size=512, shuffle=False, num_workers=2)
-  return trainset,trainloader,testset,testloader
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                          download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                            shuffle=True, num_workers=2)
 
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                        download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+                                          shuffle=False, num_workers=2)
+    return trainloader, trainset    
 
-'''
-Below code gradcam code is been referenced from https://github.com/kazuto1011/grad-cam-pytorch/blob/fd10ff7fc85ae064938531235a5dd3889ca46fed/grad_cam.py
-'''
+def display_incorrect_pred(mismatch, n=20 ):
+    classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    display_images = mismatch[:n]
+    index = 0
+    fig = plt.figure(figsize=(20,20))
+    for img in display_images:
+        image = img[0].squeeze().to('cpu').numpy()
+        pred = classes[img[1]]
+        actual = classes[img[2]]
+        ax = fig.add_subplot(4, 5, index+1)
+        ax.axis('off')
+        ax.set_title(f'\n Predicted Label : {pred} \n Actual Label : {actual}',fontsize=10) 
+        ax.imshow(np.transpose(image, (1, 2, 0))) 
+        #ax.imshow(image, cmap='gray_r')
+        index = index + 1
+    plt.show()
+
+def show_sample(dataset):
+    classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+        
+    dataiter = iter(dataset)
+
+    index = 0
+    fig = plt.figure(figsize=(20,10))
+    for i in range(10):
+        images, labels = next(dataiter)
+        actual = classes[labels]
+        image = images.squeeze().to('cpu').numpy()
+        ax = fig.add_subplot(2, 5, index+1)
+        index = index + 1
+        ax.axis('off')
+        ax.set_title(f'\n Label : {actual}',fontsize=10) 
+        ax.imshow(np.transpose(image, (1, 2, 0))) 
+        images, labels = next(dataiter)
+
+def process_dataset(batch_size=128):
+    trl, trs = load_data()
+    
+    show_sample(trs)
+
+    mean = list(np.round(trs.data.mean(axis=(0,1,2))/255, 4))
+    std = list(np.round(trs.data.std(axis=(0,1,2))/255,4))
+        
+    transform_train, transform_valid = set_albumen_params(mean, std)
+    trainset_mod, trainloader_mod, testset_mod, testloader_mod = tl_ts_mod(transform_train,transform_valid,batch_size=batch_size)
+
+    return trainset_mod, trainloader_mod, testset_mod, testloader_mod
+
+def plot_acc_loss(train_acc,train_losses,test_acc,test_losses):
+    fig, axs = plt.subplots(1,2,figsize=(15,5))
+
+    axs[0].plot(train_losses, label='Training Losses')
+    axs[0].plot(test_losses, label='Test Losses')
+    axs[0].legend(loc='upper right')
+    axs[0].set_xlabel('Epochs')
+    axs[0].set_ylabel('Loss')
+    axs[0].set_title("Loss")
+
+    axs[1].plot(train_acc, label='Training Accuracy')
+    axs[1].plot(test_acc, label='Test Accuracy')
+    axs[1].legend(loc='lower right')
+    axs[1].set_xlabel('Epochs')
+    axs[1].set_ylabel('Accuracy')
+    axs[1].set_title("Accuracy")
+
+    plt.show()    
+
+#GradCam copied from https://github.com/kazuto1011/grad-cam-pytorch
 
 from torch.nn import functional as F
 import cv2
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-
-
 
 class GradCAM:
     """ Class for extracting activations and 
@@ -199,8 +267,15 @@ def generate_gradcam(misclassified_images, model, target_layers,device):
     gcam.remove_hook()
     return layers, probs, ids
 
-def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, misclassified_images, mean,std):
+def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, misclassified_images):
+
+    trl, trs = load_data()
     
+    show_sample(trs)
+
+    mean = list(np.round(trs.data.mean(axis=(0,1,2))/255, 4))
+    std = list(np.round(trs.data.std(axis=(0,1,2))/255,4))
+
     images=[]
     labels=[]
     for i, (img, pred, correct) in enumerate(misclassified_images):
@@ -244,76 +319,4 @@ def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, 
         
         plt.axis('off')
     plt.show()
-
-def show_sample_img(loader, classes, n):
-  import matplotlib.pyplot as plt
-  import numpy as np
-
-# functions to show an image
-
-
-  def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-
-
-# get some random training images
-  dataiter = iter(loader)
-  images, labels = next(dataiter)
-  p = images.shape[0]
-  if(n<p):
-    p=n
-
-# show images
-  imshow(torchvision.utils.make_grid(images[:p]))
-# print labels
-  print(' '.join('%5s' % classes[labels[j]] for j in range(p)))
-  
-  
-def torch_device(dev_stat):
-  device = "cuda" if dev_stat else "cpu"
-  print(device)
-  return device
-
-def view_model_summary(test_model,device):
-  from torchsummary import summary
-  test_model = test_model.to(device)
-  summary(test_model, input_size=(3, 32, 32))
-  print(test_model)
-  
-def display_incorrect_images(ll,std, mean, classes,n=10 ):
-  import matplotlib.pyplot as plt
-  display_images = ll[:n]
-  index = 0
-  fig = plt.figure(figsize=(10,14))
-  for img in display_images:
-    image = img[0].squeeze().to('cpu').numpy()
-    for i in range(image.shape[0]):
-      image[i] = image[i]*std[i] + mean[i]
-    pred = classes[img[1]]
-    actual = classes[img[2]]
-    ax = fig.add_subplot(5, 2, index+1)
-    ax.axis('off')
-    ax.set_title(f'\n Predicted Label {pred} \n Actual Label : {actual}',fontsize=10) 
-    ax.imshow(np.transpose(image,(1,2,0)), cmap='gray_r')
-    index = index + 1
-  plt.show()
-  
-def show_plots(train_losses, test_losses):
-  import matplotlib.pyplot as plt
-  fig, axs = plt.subplots(1,2,figsize=(15,5))
-
-  axs[0].plot(train_losses, label='Train_losses')
-  axs[0].legend(loc='upper right')
-  axs[0].set_xlabel('Epochs')
-  axs[0].set_ylabel('Train_loss')
-  axs[0].set_title("Training Loss")
-
-  axs[1].plot(test_losses, label='Test_losses')
-  axs[1].legend(loc='upper right')
-  axs[1].set_xlabel('Epochs')
-  axs[1].set_ylabel('Test Loss')
-  axs[1].set_title("Test Loss")
-
-  plt.show()
+     
