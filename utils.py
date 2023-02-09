@@ -63,7 +63,7 @@ def load_data():
                                           shuffle=False, num_workers=2)
     return trainloader, trainset    
 
-def display_incorrect_pred(mismatch, n=20 ):
+def display_incorrect_pred(mismatch, n=10 ):
     classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     display_images = mismatch[:n]
     index = 0
@@ -72,7 +72,7 @@ def display_incorrect_pred(mismatch, n=20 ):
         image = img[0].squeeze().to('cpu').numpy()
         pred = classes[img[1]]
         actual = classes[img[2]]
-        ax = fig.add_subplot(4, 5, index+1)
+        ax = fig.add_subplot(2, 5, index+1)
         ax.axis('off')
         ax.set_title(f'\n Predicted Label : {pred} \n Actual Label : {actual}',fontsize=10) 
         ax.imshow(np.transpose(image, (1, 2, 0))) 
