@@ -38,12 +38,12 @@ def set_albumen_params(mean, std):
 
     transform_train = A.Compose(
         [
-        A.RandomCrop(height=16,width=16),
-        #A.HorizontalFlip(p=horizontalflip_prob),
+        #A.RandomCrop(height=16,width=16),
+        A.HorizontalFlip(p=horizontalflip_prob),
         A.CoarseDropout(max_holes=num_holes,min_holes = 1, max_height=max_height, max_width=max_width, 
         p=cutout_prob,fill_value=tuple([x * 255.0 for x in mean]),
         min_height=max_height, min_width=max_width, mask_fill_value = None),
-        A.Normalize(mean = mean, std = std, max_pixel_value=255, always_apply = True),
+        A.Normalize(mean = mean, std = std,p=1.0, always_apply = True),
         ToTensorV2()
         ])
     
@@ -52,6 +52,7 @@ def set_albumen_params(mean, std):
         A.Normalize(
                 mean=mean,
                 std=std,
+                p=1.0,
                 max_pixel_value=255,
             ),
         ToTensorV2()
