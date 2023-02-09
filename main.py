@@ -89,7 +89,7 @@ def test(model, device, test_loader,test_losses, test_acc,epoch,target_acc=85,sa
     test_acc.append(100. * correct / len(test_loader.dataset))
     return accuracy_epoch
 
-def train_test_model(model, trainloader, testloader, norm_type='BN', EPOCHS=20, lr=0.001, device='cpu',lambda_l1=0,target_acc=90,optim='SGD',sched='StepLR',max_epoch=5, lrmax=0.05):
+def train_test_model(model, trainloader, testloader, norm_type='BN', EPOCHS=20, lr=0.001, device='cuda',sched='StepLR',lambda_l1=0,target_acc=90,optim='SGD'):
     wrong_prediction_list = []
     train_losses = []
     train_acc = []
@@ -108,7 +108,7 @@ def train_test_model(model, trainloader, testloader, norm_type='BN', EPOCHS=20, 
         scheduler = StepLR(optimizer, step_size=100, gamma=0.25)    
         sched_fl = 'X'
     elif sched == 'OneCycle':
-        scheduler = OneCycleLR(optimizer=optimizer, max_lr=lrmax, epochs=EPOCHS, steps_per_epoch=len(trainloader), pct_start=max_epoch/EPOCHS, div_factor=10) 
+        scheduler = OneCycleLR(optimizer=optimizer, max_lr=0.05, epochs=EPOCHS, steps_per_epoch=len(trainloader), pct_start=5/EPOCHS, div_factor=10) 
         sched_fl = 'X'
     else:
         sched_fl = ' '
