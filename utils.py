@@ -38,7 +38,7 @@ def set_albumen_params(mean, std):
 
     transform_train = A.Compose(
         [
-        A.RandomCrop(width=32, height=32),
+        transforms.RandomCrop(32,padding=4),
         #A.HorizontalFlip(p=horizontalflip_prob),
         A.CoarseDropout(max_holes=num_holes,min_holes = 1, max_height=max_height, max_width=max_width, 
         p=cutout_prob,fill_value=tuple([x * 255.0 for x in mean]),
