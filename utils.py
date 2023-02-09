@@ -260,7 +260,7 @@ def show_sample_img(loader, classes, n):
 
 # get some random training images
   dataiter = iter(loader)
-  images, labels = dataiter.next()
+  images, labels = next(dataiter)
   p = images.shape[0]
   if(n<p):
     p=n

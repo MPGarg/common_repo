@@ -103,8 +103,8 @@ def train_test_model(opt, oclr, model, trainloader, testloader, norm_type='BN', 
 
   torch.manual_seed(42)
   lambda_l1 = 0
-  model =  model.to(device)
-  print(model)
+  #model =  model.to(device)
+  #print(model)
   if(opt=='Adam'):
     optimizer = Adam(model.parameters(), lr=lrmax)
   else:
