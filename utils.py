@@ -28,33 +28,24 @@ def tl_ts_mod(transform_train,transform_valid,batch_size=128):
     return trainset,trainloader,testset,testloader
 
 def set_albumen_params(mean, std):
-    horizontalflip_prob= 0.2
-    rotate_limit= 15
-    shiftscalerotate_prob= 0.25
-    num_holes= 1
-    cutout_prob= 0.5
-    max_height = 16 #32/2
-    max_width = 16 #32/2
-
     transform_train = A.Compose(
-      [
-      #A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),
-      A.RandomCrop(width=32, height=32),
-      A.HorizontalFlip(p=horizontalflip_prob),
-      A.Cutout(num_holes=1, max_h_size=max_height, max_w_size=max_width,fill_value=tuple([x * 255.0 for x in mean])),
-      #A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=rotate_limit, p=shiftscalerotate_prob),
-      #A.CoarseDropout(max_holes=num_holes,min_holes = 1, max_height=max_height, max_width=max_width, 
-      #p=cutout_prob,fill_value=tuple([x * 255.0 for x in mean]),
-      #min_height=max_height, min_width=max_width, mask_fill_value = None),
-      A.Normalize(mean = mean, std = std, always_apply = True),
-      ToTensorV2(),
-      ])
+        [A.PadIfNeeded(min_height=40, min_width=40, always_apply=True),
+        A.RandomCrop(width=32, height=32),
+        A.HorizontalFlip(),
+        A.Cutout(num_holes=1, max_h_size=8, max_w_size=8),
+        A.Normalize(mean = mean, std = std, max_pixel_value=255, always_apply = True),
+        ToTensorV2()
+        ])
     
     transform_valid = A.Compose(
-      [
-      A.Normalize( mean=mean, std=std, always_apply = True),
-      ToTensorV2(),
-      ])
+        [
+        A.Normalize(
+                mean=mean,
+                std=std,
+                max_pixel_value=255,
+            ),
+        ToTensorV2()
+        ])
     return transform_train, transform_valid 
 
 def load_data():
