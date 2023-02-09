@@ -120,6 +120,7 @@ def process_dataset(batch_size=128):
     transform_train, transform_valid = set_albumen_params(mean, std)
     trainset_mod, trainloader_mod, testset_mod, testloader_mod = tl_ts_mod(transform_train,transform_valid,batch_size=batch_size)
 
+    show_sample(trainset_mod)
     return trainset_mod, trainloader_mod, testset_mod, testloader_mod
 
 def plot_acc_loss(train_acc,train_losses,test_acc,test_losses):
