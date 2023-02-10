@@ -3,11 +3,11 @@
 This repository contains classes and functions that are called in multiple notebook files.
 
 Important Files/Folder in this repo:
-  * main.py: Following functions are present in this file
+  * main.py [link](main.py): Following functions are present in this file
     * train: For training model on train dataset
     * test: For evaluating model on test dataset
     * train_test_model: Model is executed in this function. Optimized, scheduler, number of epochs, lambda for L1 etc are managed in this.
-  * utils.py: Following functions are present in this file
+  * utils.py [link](utils.py): Following functions are present in this file
     * Class cifar_ds10: Loads data for CIFAR10
     * tl_ts_mod: Create DataLoader for images
     * set_albumen_params: Define albumentations to be applied
@@ -20,4 +20,4 @@ Important Files/Folder in this repo:
     * generate_gradcam: Generate GradCam for layers
     * plot_gradcam: Show GradCam generated images
   * models folder
-    * resnet.py : It contains Resnet18 & Resnet34 definition
+    * resnet.py [link](models/resnet.py): It contains Resnet18 & Resnet34 definition
