@@ -20,4 +20,4 @@ Important Files/Folder in this repo:
     * generate_gradcam: Generate GradCam for layers
     * plot_gradcam: Show GradCam generated images
   * models folder
-    *resnet.py : It contains Resnet18 & Resnet34 definition
+    * resnet.py : It contains Resnet18 & Resnet34 definition
