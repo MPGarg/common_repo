@@ -271,7 +271,7 @@ def plot_gradcam(gcam_layers, target_layers, class_names, image_size,predicted, 
 
     trl, trs = load_data()
     
-    show_sample(trs)
+    #show_sample(trs)
 
     mean = list(np.round(trs.data.mean(axis=(0,1,2))/255, 4))
     std = list(np.round(trs.data.std(axis=(0,1,2))/255,4))
